@@ -1,12 +1,12 @@
 from cachetools import TTLCache, cached
 from flask import current_app
-from functools import reduce
+from sqlalchemy import func
 import dateutil.parser
 import datetime
 
 from server.models.dtos.user_dto import UserDTO, UserOSMDTO, UserFilterDTO, UserSearchQuery, UserSearchDTO, \
     UserStatsDTO
-from server.models.postgis.task import TaskHistory
+from server.models.postgis.task import Task, TaskHistory
 from server.models.postgis.user import User, UserRole, MappingLevel
 from server.models.postgis.utils import NotFound
 from server.services.users.osm_service import OSMService, OSMServiceError
@@ -91,6 +91,8 @@ class UserService:
         user = UserService.get_user_by_username(username)
         stats_dto = UserStatsDTO()
 
+        # time spent mapping
+
         actions = TaskHistory.query.filter(
             TaskHistory.user_id == user.id,
             TaskHistory.action == 'LOCKED_FOR_MAPPING',
@@ -106,6 +108,21 @@ class UserService:
                                              microseconds=duration.microsecond)
 
         stats_dto.time_spent_mapping = total_time.time().isoformat()
+
+        # total area mapped
+
+        tasks = Task.query.filter(Task.mapped_by == user.id)
+
+        import inspect
+
+        total_area = 0
+        for task in tasks:
+            task_area = task.geometry.ST_Area()
+            print(task_area)
+            total_area += task_area
+
+        print(total_area)
+        stats_dto.total_area_mapped = total_area
 
         return stats_dto
 

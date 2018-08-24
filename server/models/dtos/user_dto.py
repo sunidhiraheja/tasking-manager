@@ -48,6 +48,8 @@ class UserDTO(Model):
 class UserStatsDTO(Model):
     """ DTO containing statistics about the user """
     time_spent_mapping = IntType(serialized_name='timeSpentMapping')
+    total_area_mapped = IntType(serialized_name='totalAreaMapped')
+    total_area_validated = IntType(serialized_name='totalAreaValidated')
 
 
 class UserOSMDTO(Model):
